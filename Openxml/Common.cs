@@ -103,13 +103,13 @@ namespace Openxml
         public double UnitTypeChanged(int type,double d)
         {
             if (type == (int)UnitType.ch)
-                return d / 100;
+                return Math.Round(d / 100,2);
             else if (type == (int)UnitType.cm)
-                return d / 567;
+                return Math.Round(d / 567, 2);
             else if (type == (int)UnitType.pt)
-                return d / 20;
+                return Math.Round(d / 20, 2);
             else if (type == (int)UnitType.line)
-                return d / 240;
+                return Math.Round(d / 240, 2);
             else
                 return d;
         }

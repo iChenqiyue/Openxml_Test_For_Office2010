@@ -386,27 +386,39 @@ namespace Openxml
                 let ppr = para.Element(w + "pPr")
                 //页面设置
                 let sectpr = ppr != null ? ppr.Element(w + "sectPr") : null
+
                 let pgmar = sectpr != null ? sectpr.Element(w + "pgMar") : null  //页边距
                 let pgsz = sectpr != null ? sectpr.Element(w + "pgSz") : null  //纸张大小
                 let orient = sectpr != null ? sectpr.Element(w + "orient") : null  //方向
+
+
                 //段落排版
-                let jc = ppr != null ? ppr.Element(w + "jc") : null  //常规
+                //常规
+                //对齐方式
+                let jc = ppr != null ? ppr.Element(w + "jc") : null
+                //大纲等级
                 let outlineLvl = ppr != null ? ppr.Element(w + "outlineLvl") : null
-                let ind = ppr != null ? ppr.Element(w + "ind") : null  //缩进
-                let ind_left = ind != null ? ind.Attribute(w + "left") : null  //缩进
-                let ind_right = ind != null ? ind.Attribute(w + "right") : null  //缩进
-                let ind_leftChars = ind != null ? ind.Attribute(w + "leftChars") : null  //缩进
-                let ind_rightChars = ind != null ? ind.Attribute(w + "rightChars") : null  //缩进
-                let ind_firstline = ind != null ? ind.Attribute(w + "firstLine") : null  //缩进
-                let ind_hanging = ind != null ? ind.Attribute(w + "hanging") : null  //缩进
-                let ind_firstlineChars = ind != null ? ind.Attribute(w + "firstLineChars") : null  //缩进
-                let ind_hangingChars = ind != null ? ind.Attribute(w + "hangingChars") : null  //缩进
 
+                //缩进
+                let ind = ppr != null ? ppr.Element(w + "ind") : null  
 
-                let spacing = ppr != null ? ppr.Element(w + "spacing") : null //间距
-                let spacing_beforeLines=spacing != null ? spacing.Attribute(w + "beforeLines") : null //间距
-                let spacing_afterLines = spacing != null ? spacing.Attribute(w + "afterLines") : null //间距
-                let spacing_line = spacing != null ? spacing.Attribute(w + "line") : null //间距
+                let ind_left = ind != null ? ind.Attribute(w + "left") : null
+                let ind_leftChars = ind != null ? ind.Attribute(w + "leftChars") : null
+                let ind_right = ind != null ? ind.Attribute(w + "right") : null  
+                let ind_rightChars = ind != null ? ind.Attribute(w + "rightChars") : null 
+                //首行缩进
+                let ind_firstline = ind != null ? ind.Attribute(w + "firstLine") : null                
+                let ind_firstlineChars = ind != null ? ind.Attribute(w + "firstLineChars") : null
+                //悬挂缩进
+                let ind_hanging = ind != null ? ind.Attribute(w + "hanging") : null
+                let ind_hangingChars = ind != null ? ind.Attribute(w + "hangingChars") : null  
+
+                //间距
+                let spacing = ppr != null ? ppr.Element(w + "spacing") : null 
+
+                let spacing_beforeLines=spacing != null ? spacing.Attribute(w + "beforeLines") : null 
+                let spacing_afterLines = spacing != null ? spacing.Attribute(w + "afterLines") : null
+                let spacing_line = spacing != null ? spacing.Attribute(w + "line") : null 
 
 
                 //段落格式
