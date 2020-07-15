@@ -1,13 +1,20 @@
-﻿using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Drawing.Charts;
-using DocumentFormat.OpenXml.Wordprocessing;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
+using System.ComponentModel;
+using System.Data;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
+using System.Linq;
+using System.Xml.Linq;
+using System.IO.Packaging;
+using System.IO;
+
+using System.Xml;
+using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace Openxml
 {
@@ -15,12 +22,28 @@ namespace Openxml
     {
 
 
-        string[] Outlinelvl = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };
-        string[] col = { "一栏", "两栏", "三栏", "偏左", "偏右" };
-        enum UnitType { ch, cm, mm, inch, pt, line };
-        string[] Unit = { "字符", "厘米", "毫米", "英寸", "磅", "行" };
+        string[] Outlinelvl = { "一", "二", "三", "四", "五", "六", "七", "八", "九" };//项目等级
+        string[] col = { "一栏", "两栏", "三栏", "偏左", "偏右" };//分栏种类
+        enum UnitType { ch, cm, mm, inch, pt, line };//单位种类
+        string[] Unit = { "字符", "厘米", "毫米", "英寸", "磅", "行" };//代为种类对应的中文
+
+        /// <summary>
+        /// xml文档类
+        /// </summary>
+        public class XWord
+        {
+
+            public XNamespace xname;
+            public XDocument xdoc;
+            public XDocument styledoc;
+            public XDocument numberingdoc;
+        }
+
 
         #region 页面大小
+        /// <summary>
+        /// 页面大小类
+        /// </summary>
         class PageSize
         {
             public string name;
@@ -33,10 +56,17 @@ namespace Openxml
                 length = length1;
             }
         }
-        PageSize A3 = new PageSize("A3", 29.7, 42);
-        PageSize A4 = new PageSize("A4", 21, 29.7);
-        PageSize A5 = new PageSize("A5", 14.8, 21);
 
+        PageSize A3 = new PageSize("A3", 29.7, 42);//A3纸张
+        PageSize A4 = new PageSize("A4", 21, 29.7);//A4纸张
+        PageSize A5 = new PageSize("A5", 14.8, 21);//A5纸张
+
+        /// <summary>
+        /// 判断页大小类型
+        /// </summary>
+        /// <param name="width1"></param>
+        /// <param name="length1"></param>
+        /// <returns></returns>
         public string PageSizeType(double width1, double length1)
         {
             if (width1 == A3.width && length1 == A3.length)
@@ -48,7 +78,7 @@ namespace Openxml
             else
                 return "error";
         }
-        #endregion
+
 
         /// <summary>
         /// 判断页面方向
@@ -64,6 +94,9 @@ namespace Openxml
             else
                 return orient;
         }
+        #endregion
+
+
 
         /// <summary>
         /// 判断段落对齐方式
@@ -224,18 +257,23 @@ namespace Openxml
 
 
         #region 字体相关
+        /// <summary>
+        /// 字体类
+        /// </summary>
         public class FontPr
         {
-            public string rFonts;
-            public string bold;
-            public string italic;
-            public string color;
-            public double fontsize;
-            public string underline;
-            public string vertAlign;
-            public string emphasis;
-            public double spacing;
-            public double postion;
+            public string rFonts;//中文字体
+            public string bold;//粗体
+            public string italic;//斜体
+            public string color;//颜色
+            public double fontsize;//字体大小
+            public string underline;//下划线
+            public string vertAlign;//效果
+            public string emphasis;//着重号
+            public double spacing;//间距
+            public double postion;//位置
+            public string combine;//双行合一
+            public string vert;//纵横混排
         }
 
         /// <summary>
@@ -298,6 +336,11 @@ namespace Openxml
                 return vertAlign;
         }
 
+        /// <summary>
+        /// 判断是否有着重号
+        /// </summary>
+        /// <param name="emphasis"></param>
+        /// <returns></returns>
         public string emphasisType(string emphasis)
         {
             if (emphasis == null)
@@ -323,6 +366,7 @@ namespace Openxml
                 return string.Format("RGB({0},{1},{2})", r, g, b);
             }
         }
+
         /// <summary>
         /// 判断间距类型
         /// </summary>
@@ -338,6 +382,7 @@ namespace Openxml
                 return "标准";
                 
         }
+
         /// <summary>
         /// 判断位置类型
         /// </summary>
@@ -353,16 +398,51 @@ namespace Openxml
                 return "标准";
 
         }
+
+        /// <summary>
+        /// 判断是否双行合一
+        /// </summary>
+        /// <param name="combine"></param>
+        /// <returns></returns>
+        public string combineType(string combine)
+        {
+            if (combine != null)
+                return "双行合一";
+            else
+                return "";
+        }
+
+        /// <summary>
+        /// 判断是否纵横混排
+        /// </summary>
+        /// <param name="vert"></param>
+        /// <returns></returns>
+        public string vertType(string vert)
+        {
+            if (vert != null)
+                return "纵横混排";
+            else
+                return "";
+        }
+
+        /// <summary>
+        /// 中文版式带圈字符及合并字符类
+        /// </summary>
         public class ChineseType
         {
-            public string type;
-            public string str;
-            public string symbol;
+            public string type;//种类
+            public string str;//字符串
+            public string symbol;//符号
         }
 
         // eq \o\ac(○,圈) eq \o\ac(□,A) eq \o\ac(△,!) eq \o\ac(◇,壹)
         //eq \o(\s\up 8(合并),\s\do 3(字符))eq \o(\s\up 8(两　),\s\do 3(　字))eq \o(\s\up 8(三个),\s\do 3(字))eq \o(\s\up 8(五个),\s\do 3(合并字))eq \o(\s\up 8(六个合),\s\do 3(并字符))
 
+        /// <summary>
+        /// 返回中文字符类型及值列表
+        /// </summary>
+        /// <param name="chars"></param>
+        /// <returns></returns>
         public List<ChineseType> ChineseList(string chars)
         {
 
@@ -374,12 +454,12 @@ namespace Openxml
 
                 string temp = "";
 
-                if (chars.Contains(@" eq \o\ac("))
+                if (chars.Contains(@" eq \o\ac("))//包含带圈字符样式
                 {
-                    temp = chars.Replace(@" eq \o\ac(", "");
+                    temp = chars.Replace(@" eq \o\ac(", "");//替换
 
-                    temp = temp.Replace(")", ";");
-                    string[] strs = temp.Split(';');
+                    temp = temp.Replace(")", ";");//替换，以分割
+                    string[] strs = temp.Split(';');//分割字符串
                     foreach (string str in strs)
                     {
                         if (str == "")
@@ -389,24 +469,24 @@ namespace Openxml
                         chinessType.str = str.Substring(2);
                         chinessType.symbol = str.Substring(0, 1);
                         
-                        list.Add(chinessType);
+                        list.Add(chinessType);//添加带圈字符到列表
                     }
 
                     return list;
                 }
-                else if (chars.Contains(@"eq \o(\s\up 8("))
+                else if (chars.Contains(@"eq \o(\s\up 8("))//包含合并字符样式
                 {
-                    temp = chars.Replace(@"eq \o(\s\up 8(", "");
+                    temp = chars.Replace(@"eq \o(\s\up 8(", "");//替换
                     temp = temp.Replace(@"),\s\do 3(", "");
                     temp = temp.Replace("　　", "");
                     temp = temp.Replace("))", ";");
-                    string[] strs = temp.Split(';');
+                    string[] strs = temp.Split(';');//分割字符串
                     foreach (string str in strs)
                     {
                         ChineseType chinessType = new ChineseType();
                         chinessType.type = "合并字符";
                         chinessType.str = str;
-                        list.Add(chinessType);
+                        list.Add(chinessType);//添加合并字符到列表
                     }
                     return list;
                 }
