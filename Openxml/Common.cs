@@ -27,6 +27,9 @@ namespace Openxml
         enum UnitType { ch, cm, mm, inch, pt, line };//单位种类
         string[] Unit = { "字符", "厘米", "毫米", "英寸", "磅", "行" };//代为种类对应的中文
 
+        enum LineType { single,dotted,dashSmallGap,dashed,dotDash,dotDotDash,doubleline,triple,thinThickSmallGap,thickThinSmallGap};
+        string[] Line = { "single", "dotted", "dashSmallGap", "dashed", "dotDash", "dotDotDash", @"double", "triple", "thinThickSmallGap", "thickThinSmallGap" };
+
         /// <summary>
         /// xml文档类
         /// </summary>
@@ -34,11 +37,53 @@ namespace Openxml
         {
 
             public XNamespace xname;
+            public XNamespace xmarkup;
+            public XNamespace xworddrawing;
+            public XNamespace xdrawing;
+            public XNamespace xshape;
             public XDocument xdoc;
             public XDocument styledoc;
             public XDocument numberingdoc;
+          
+            
+        }
+        public class ArtText
+        {
+            public FontPr font;
+            public string style;
+            public string shape;
+            public string surrounding;
+            public ArtText(FontPr tfont,string tsurrounding,string tshape)
+            {
+                font = tfont;
+                surrounding = tsurrounding;
+                shape = tshape;
+            }
         }
 
+        public class Picture
+        {
+            public double width;
+            public double height;
+            public string surrounding;
+            public Picture() { }
+            public Picture(double twidth,double theight,string tsurrounding)
+            {
+                width = twidth;
+                height = theight;
+                surrounding = tsurrounding;
+            }
+        }
+
+        public class Border
+        {
+            public string shadow;
+            public string frame;
+            public string linetype;
+            public string color;
+            public double width;
+            public string type;
+        }
 
         #region 页面大小
         /// <summary>
@@ -103,20 +148,20 @@ namespace Openxml
         /// </summary>
         /// <param name="js"></param>
         /// <returns></returns>
-        public string JsType(string js)
+        public string JcType(string jc)
         {
-            if (js == "left")
+            if (jc == "left")
                 return "左对齐";
-            else if (js == "right")
+            else if (jc == "right")
                 return "右对齐";
-            else if (js == "center")
+            else if (jc == "center")
                 return "居中";
-            else if (js == "both")
+            else if (jc == "both")
                 return "两端对齐";
-            else if (js == "distribute")
+            else if (jc == "distribute")
                 return "分散对齐";
             else
-                return js;
+                return jc;
         }
         
         /// <summary>
@@ -274,7 +319,17 @@ namespace Openxml
             public double postion;//位置
             public string combine;//双行合一
             public string vert;//纵横混排
+            public Border border;
+            public FontPr() { }
+            public FontPr(string rfonts,double size)
+            {
+                rFonts = rfonts;
+                fontsize = size;
+            }
         }
+
+
+        
 
         /// <summary>
         /// 判断字形
@@ -358,6 +413,8 @@ namespace Openxml
         {
             if (hex == null)
                 return null;
+            else if (hex == "auto")
+                return "auto";
             else
             {
                 int r = Convert.ToInt32(hex.Substring(0, 2), 16);
@@ -495,5 +552,66 @@ namespace Openxml
             }          
         }
         #endregion
+
+        /// <summary>
+        /// 边框类型
+        /// </summary>
+        /// <param name="linetype"></param>
+        /// <param name="shadow"></param>
+        /// <param name="frame"></param>
+        /// <returns></returns>
+        public string borderType(Border border)
+        {
+            if (border.type == "all")
+                return "全部";
+            else if (border.type == "part")
+                return "虚框";
+            else if (border.shadow != null)
+                return "阴影";
+            else if (border.frame != null)
+                return "三维";
+            else if (border.linetype != null || border.type == "none")
+                return "方框";
+            else
+                return "无";
+        }
+
+        
+
+
+        public int lineType(string linetype)
+        {
+            for(int i = 0; i < Line.Length; i++)
+            {
+                if (linetype == Line[i])
+                    return i+1;
+            }
+            return 0;
+        }
+
+        public Border TableBorderType(List<Border>borders)
+        {
+
+            Border border = new Border();
+            if (borders[1].linetype == "none")
+            {
+                return borders[0];
+            }
+            else if (borders[0].linetype == borders[1].linetype)
+            {
+                border = borders[0];
+                border.type = "all";
+                return border;
+            }
+            else
+            {
+                border = borders[0];
+                border.type = "part";
+                return border;
+            }
+
+        }
+
+        
     }
 }

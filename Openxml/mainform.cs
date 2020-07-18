@@ -15,6 +15,7 @@ using System.IO;
 using System.Xml;
 using System.Text.RegularExpressions;
 using System.Collections;
+using System.Reflection;
 
 namespace Openxml
 {
@@ -29,7 +30,7 @@ namespace Openxml
 
         private void mainform_Load(object sender, EventArgs e)
         {
-            string filepath = @"D:\word_smp完成.docx";
+            string filepath = @"D:\word_smp完成_temp.docx";
             //string filepath = @"D:\test.docx";
             //createfile(@"D:\file.docx");
             //addstring(@"D:\file.docx", "hello");
@@ -266,8 +267,19 @@ namespace Openxml
               "http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering";
             const string wordmlNamespace =
               "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+            const string markupCompatibility = 
+                "http://schemas.openxmlformats.org/markup-compatibility/2006";
+            const string wordprocessingDrawing =
+                "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing";
+            const string drawingml =
+                "http://schemas.openxmlformats.org/drawingml/2006/main";
+            const string wordprocessingShape =
+                "http://schemas.microsoft.com/office/word/2010/wordprocessingShape";
             XNamespace w = wordmlNamespace;
-
+            XNamespace mc = markupCompatibility;
+            XNamespace wp = wordprocessingDrawing;
+            XNamespace a = drawingml;
+            XNamespace wps = wordprocessingShape;
             XDocument xDoc = null;
             XDocument styleDoc = null;
             XDocument numberingDoc = null;
@@ -314,6 +326,10 @@ namespace Openxml
             }
             document.xdoc = xDoc;
             document.xname = w;
+            document.xmarkup = mc;
+            document.xdrawing = wp;
+            document.xworddrawing = a;
+            document.xshape = wps;
             document.styledoc = styleDoc;
             document.numberingdoc = numberingDoc;
             return document;
@@ -428,6 +444,12 @@ namespace Openxml
             fontPr.postion = (tempa = GetAttribute(font, "postion", "val", w)) != null ? (double)tempa : 0;//字符位置
             fontPr.combine=(tempa=GetAttribute(font, "eastAsianLayout","combine",w))!=null?(string)tempa: null;//双行合一
             fontPr.vert= (tempa = GetAttribute(font, "eastAsianLayout", "vert", w)) != null ? (string)tempa : null;//纵横混排
+            fontPr.border = new Border();
+            fontPr.border.color= (tempa = GetAttribute(font, "bdr", "color", w)) != null ? (string)tempa : null;//边框颜色        
+            fontPr.border.linetype= (tempa = GetAttribute(font, "bdr", "val", w)) != null ? (string)tempa : null;//边框线型
+            fontPr.border.width = (tempa = GetAttribute(font, "bdr", "sz", w)) != null ? (double)tempa : 0;//边框宽度
+            fontPr.border.shadow = (tempa = GetAttribute(font, "bdr", "shadow", w)) != null ? (string)tempa : null;//边框阴影
+            fontPr.border.frame = (tempa = GetAttribute(font, "bdr", "frame", w)) != null ? (string)tempa : null;//边框三维
 
             return fontPr;
         }
@@ -474,6 +496,46 @@ namespace Openxml
             }
         }
 
+
+        public Border BorderText(XElement e,XNamespace w)
+        {
+            XAttribute tempa;
+            //获取所有的ppr
+
+            //获取字体属性
+            Border border = new Border();
+            border.color = (tempa = GetAttribute(e, "top", "color", w)) != null ? (string)tempa : null;//边框颜色        
+            border.linetype = (tempa = GetAttribute(e, "top", "val", w)) != null ? (string)tempa : null;//边框线型
+            border.width = (tempa = GetAttribute(e, "top", "sz", w)) != null ? (double)tempa : 0;//边框宽度
+            border.shadow = (tempa = GetAttribute(e, "top", "shadow", w)) != null ? (string)tempa : null;//边框阴影
+            border.frame = (tempa = GetAttribute(e, "top", "frame", w)) != null ? (string)tempa : null;//边框三维
+
+            return border;
+        }
+
+        public List<Border> TableBorder(XElement e,XNamespace w)
+        {
+            XAttribute tempa;
+            //获取所有的ppr
+            List<Border> borderList = new List<Border>();
+            //获取字体属性
+
+            Border border_top = new Border();
+            border_top.color = (tempa = GetAttribute(e, "top", "color", w)) != null ? (string)tempa : null;//边框颜色        
+            border_top.linetype = (tempa = GetAttribute(e, "top", "val", w)) != null ? (string)tempa : null;//边框线型
+            border_top.width = (tempa = GetAttribute(e, "top", "sz", w)) != null ? (double)tempa : 0;//边框宽度
+            border_top.shadow = (tempa = GetAttribute(e, "top", "shadow", w)) != null ? (string)tempa : null;//边框阴影
+            border_top.frame = (tempa = GetAttribute(e, "top", "frame", w)) != null ? (string)tempa : null;//边框三维
+            borderList.Add(border_top);
+            Border border_insideH = new Border();
+            border_insideH.color = (tempa = GetAttribute(e, "insideH", "color", w)) != null ? (string)tempa : null;//边框颜色        
+            border_insideH.linetype = (tempa = GetAttribute(e, "insideH", "val", w)) != null ? (string)tempa : null;//边框线型
+            border_insideH.width = (tempa = GetAttribute(e, "insideH", "sz", w)) != null ? (double)tempa : 0;//边框宽度
+            border_insideH.shadow = (tempa = GetAttribute(e, "insideH", "shadow", w)) != null ? (string)tempa : null;//边框阴影
+            border_insideH.frame = (tempa = GetAttribute(e, "insideH", "frame", w)) != null ? (string)tempa : null;//边框三维
+            borderList.Add(border_insideH);
+            return borderList;
+        }
         /// <summary>
         /// 获取项目等级的属性
         /// </summary>
@@ -511,19 +573,108 @@ namespace Openxml
             return lvlText;
         }
 
+
+        public ArtText GetArtText(XElement e, XNamespace mc,XNamespace w, XNamespace wp, XNamespace a, XNamespace wps)
+        {
+            
+            XElement tempe;
+            XAttribute tempa;
+            //获取字体属性
+            ArtText arttext = new ArtText(new FontPr("Times New Roman",0),"","");
+
+            var r = e.Element(w + "r");
+            
+            var AlternateContent = r!=null?r.Element(mc + "AlternateContent"):null;
+            if (AlternateContent == null)
+                return arttext;
+            else
+            {
+                var drawing = AlternateContent.Element(mc + "Choice").Element(w + "drawing");
+                var anchor = drawing!=null?drawing.Element(wp + "anchor"):null;
+                if (anchor == null)
+                    return arttext;
+                else
+                {
+                    var wsp = anchor.Element(a + "graphic").Element(a + "graphicData").Element(wps + "wsp");
+                    var rpr=wsp.Element(wps + "txbx").Element(w + "txbxContent").Element(w + "p").Element(w + "r").Element(w + "rPr");
+                    var prstTxWarp = wsp.Element(wps + "bodyPr").Element(a+ "prstTxWarp");
+                    arttext.font.rFonts = (tempa = GetAttribute(rpr, "rFonts", "ascii", w)) != null ? (string)tempa : "Times New Roman";
+                    arttext.font.fontsize = (tempa = GetAttribute(rpr, "sz", "val", w)) != null ? (double)tempa : 0;
+                    arttext.shape= prstTxWarp != null ? (string)prstTxWarp.Attribute("prst") : "null";
+                    string[] type = { "wrapNone", "wrapSquare", "wrapThrough", "wrapTight", "wrapTopAndBottom" };
+                    for (int i = 0; i < type.Length; i++)
+                    {
+                        var wrap = anchor.Element(wp + type[i]);
+                        if (wrap != null)
+                        {
+                            arttext.surrounding = type[i];
+                            break;
+                        }
+                    }
+                    return arttext;
+                }
+            }
+        }
+
+        public Picture GetPicture(XElement e,  XNamespace w, XNamespace wp)
+        {
+
+            XElement tempe;
+            XAttribute tempa;
+            //获取字体属性
+            Picture picture = new Picture(0, 0, "null");
+
+            var r = e.Element(w + "r");
+
+            var drawing = r != null ? r.Element(w + "drawing") : null;
+            if (drawing == null)
+                return picture;
+            else
+            {
+                
+                var anchor = drawing != null ? drawing.Element(wp + "anchor") : null;
+                if (anchor == null)
+                    return picture;
+                else
+                {
+                    picture.width = Math.Round((double)anchor.Element(wp + "extent").Attribute("cx") / 360000, 2)  ;
+                    picture.height = Math.Round((double)anchor.Element(wp + "extent").Attribute("cy") / 360000, 2);
+                    string[] type = { "wrapNone", "wrapSquare", "wrapThrough", "wrapTight", "wrapTopAndBottom" };
+                    for (int i = 0; i < type.Length; i++)
+                    {
+                        var wrap = anchor.Element(wp + type[i]);
+                        if (wrap != null)
+                        {
+                            picture.surrounding = type[i];
+                            break;
+                        }
+                    }
+                    return picture;
+                }
+            }
+        }
+
+
+
         /// <summary>
         /// 获取所有段落
         /// </summary>
         /// <param name="document"></param>
         public void GetParagraph(XWord document)
         {
-            string Keyword = "另一个纵横";
+            string Keyword = "";
             XDocument styleDoc = document.styledoc;
             XNamespace w = document.xname;
+            XNamespace mc = document.xmarkup;
+            XNamespace wp = document.xdrawing;
+            XNamespace a = document.xworddrawing;
+            XNamespace wps = document.xshape;
             XDocument xDoc = document.xdoc;
             XDocument numberingDoc = document.numberingdoc;
-            Element element = new Element();
             
+            Element element = new Element();
+            //XElement tempe;
+            XAttribute tempa;
             
             element.init();
             /* string defaultStyle =
@@ -565,6 +716,29 @@ namespace Openxml
                     orient = orient != null ? (string)orient.Attribute(w + "val") : "Portrait"//方向
                 };
 
+            var tables =
+                 from table in xDoc
+                             .Root
+                             .Element(w + "body")
+                             .Descendants(w + "tbl")
+                 let tblpr = table != null ? table.Element(w + "tblPr") : null
+                 let tblBorders = tblpr != null ? tblpr.Element(w + "tblBorders") : null
+                 let tblGrid = table != null ? table.Element(w + "tblGrid") : null
+                 let trPr=table!=null?table.Element(w+"tr").Element(w+"trPr"):null
+                 let jc = tblpr != null ? tblpr.Element(w + "jc") : null
+                 let rPr = table != null ? table.Element(w + "tr").Element(w + "tc").Element(w + "p").Element(w+ "pPr").Element(w+"rPr"):null
+
+                 select new
+                 {
+                     TableBorder = TableBorder(tblBorders, w),
+                     cols = tblGrid.Elements(w + "gridCol").Count(),                          
+                     rows =table.Elements(w+"tr").Count(),
+                     jc=jc!=null?(string)jc.Attribute(w+"val"):null,
+                     colwidth = (tempa = GetAttribute(tblGrid, "gridCol", "w", w)) != null ? (double)tempa : 0,
+                     rowheight = (tempa = GetAttribute(trPr, "trHeight", "val", w)) != null ? (double)tempa : 
+                     (tempa = GetAttribute(rPr, "sz", "val", w)) != null ? (double)tempa : 0,
+                 };
+
             //获取段落属性
             var paras =
                 from para in xDoc
@@ -589,7 +763,7 @@ namespace Openxml
                 //常规
                 //-----------------                
                 let jc = ppr != null ? ppr.Element(w + "jc") : null//对齐方式
-             
+
                 let outlineLvl = ppr != null ? ppr.Element(w + "outlineLvl") : null//大纲等级
 
                 //-----------------
@@ -624,10 +798,6 @@ namespace Openxml
                 let cols_num = cols != null ? cols.Attribute(w + "num") : null//栏数
                 let cols_sep = cols != null ? cols.Attribute(w + "sep") : null//分隔线
 
-
-                //let pbdr = ppr != null ? ppr.Element(w + "pBdr") : null  //边框
-                //let split = pbdr != null ? ppr.Element(w + "bottom") : null  //下框
-
                 //-----------------
                 //首字下沉
                 //-----------------
@@ -641,6 +811,20 @@ namespace Openxml
                 let numPr = ppr != null ? ppr.Element(w + "numPr") : null//项目符号
                 let numPr_ilvl = numPr != null ? numPr.Element(w + "ilvl") : null//等级
                 let numPr_numId = numPr != null ? numPr.Element(w + "numId") : null//索引值
+
+                //------------------------------------------------------------------
+                //字体边框
+                //------------------------------------------------------------------
+                let pbdr = ppr != null ? ppr.Element(w + "pBdr") : null  //边框
+
+                //------------------------------------------------------------------
+                //浮动式图片
+                //------------------------------------------------------------------
+
+                //-----------------
+                //艺术字
+                //-----------------
+
 
 
                 select new
@@ -704,8 +888,8 @@ namespace Openxml
                     //-----------------
                     //分栏(目前没有偏左和偏右)
                     //-----------------
-                    cols_num = cols_num != null ? (int)cols_num :1,//栏数
-                    cols_sep = cols_sep != null ? (int)cols_sep :0 ,//分隔线
+                    cols_num = cols_num != null ? (int)cols_num : 1,//栏数
+                    cols_sep = cols_sep != null ? (int)cols_sep : 0,//分隔线
 
                     //-----------------
                     //首字下沉
@@ -741,6 +925,24 @@ namespace Openxml
                     PinYinText = PinYinText(para),//拼音指南
 
                     //------------------------------------------------------------------
+                    //边框
+                    //------------------------------------------------------------------
+
+                    //-----------------
+                    //字体边框
+                    //-----------------
+                    BorderText = BorderText(pbdr, w),
+
+                    //------------------------------------------------------------------
+                    //浮动式图片
+                    //------------------------------------------------------------------
+
+                    //-----------------
+                    //艺术字
+                    //-----------------
+                    artText = GetArtText(para, mc, w, wp, a, wps),
+                    picture = GetPicture(para, w, wp),
+                    //------------------------------------------------------------------
                     //段落正文
                     //------------------------------------------------------------------
                     ParagraphNode = para,//段落编号
@@ -748,6 +950,8 @@ namespace Openxml
 
                 };
         
+
+
                 #region 废物
             //纸张大小
             // Find all paragraphs in the document.  
@@ -810,7 +1014,7 @@ namespace Openxml
             {
                
                 result += p.Text+"\n";
-                result += string.Format("段落排版\n常规\n对齐方式：{0} 样式：{1}\n", JsType(p.jc), outlineLvlType(p.outlineLvl));
+                result += string.Format("段落排版\n常规\n对齐方式：{0} 样式：{1}\n", JcType(p.jc), outlineLvlType(p.outlineLvl));
                 result += string.Format("缩进\n左：{0} 右：{1} 特殊格式：{2}\n",indCount((int)UnitType.ch, p.ind_left,p.ind_leftChars),
                     indCount((int)UnitType.ch, p.ind_right, p.ind_rightChars),ind_special(p.ind_firstline+p.ind_firstlineChars,p.ind_hanging+p.ind_hangingChars) );
                 result += string.Format("间距\n段前：{0}行 段后：{1}行 行距：{2}倍行距\n\n", UnitTypeChanged((int)UnitType.ch, p.spacing_beforeLines),
@@ -825,8 +1029,32 @@ namespace Openxml
                     postionType(p.Fonts.postion), Math.Abs(p.Fonts.postion / 2));
                 
                 result += string.Format("中文版式\n{0}{1}{2}{3}\n\n", p.FiledText,p.PinYinText,combineType(p.Fonts.combine),vertType(p.Fonts.vert));
+                result += string.Format("边框\n文字边框\n类型：{0} 线性：{1} 颜色：{2} 宽度：{3}磅\n",
+                    borderType(p.Fonts.border), 
+                    lineType(p.Fonts.border.linetype), hexTorgb(p.Fonts.border.color), p.Fonts.border.width / 8);
+                result += string.Format("段落边框\n类型：{0} 线性：{1} 颜色：{2} 宽度：{3}磅\n\n",
+                    borderType(p.BorderText),
+                    lineType(p.BorderText.linetype), hexTorgb(p.BorderText.color), p.BorderText.width / 8);
+                result += string.Format("浮动式图片\n艺术字\n字体：{0} 大小：{1} 环绕：{2} 形状：{3}\n", p.artText.font.rFonts, p.artText.font.fontsize,
+                    p.artText.surrounding,p.artText.shape);
+                result += string.Format("图片\n版式：{0} 宽：{1}cm 高：{2}cm\n\n", p.picture.surrounding, p.picture.width,p.picture.height);
+                result += "------------------------------------------------------\n\n";
+            }
+
+            foreach(var t in tables)
+            {
+                Border border = TableBorderType(t.TableBorder);
+                result += string.Format("表格边框\n类型：{0} 线性：{1} 颜色：{2} 宽度：{3}磅\n\n",
+                    borderType(border),lineType(border.linetype), hexTorgb(border.color), border.width / 8);
+                result += string.Format("表格\n插入操作\n行数：{0} 列数：{1}\n\n", t.rows, t.cols);
+                result += string.Format("表格操作\n对齐方式：{0} 行高：{1}cm 列宽：{2}cm\n", JcType(t.jc),UnitTypeChanged((int)UnitType.cm,t.rowheight),
+                    UnitTypeChanged((int)UnitType.cm,t.colwidth));
+                result += "------------------------------------------------------\n\n";
             }
             rtxt.Text = result;
+
+
+
             
 
             //项目符号显示
